@@ -12,6 +12,7 @@ def main():
 						help="The amount in wei.")
 	parser.add_argument('--pathfinder-url', type=str, default="http://65.109.109.165:8080/",
 						help="The url to the pathfinder service.")
+
 	cli_args = parser.parse_args()
 
 	print(cli_args)
@@ -20,7 +21,7 @@ def main():
 	to = cli_args.sink
 	value = cli_args.amount
 
-	p = pathfinder.Pathfinder("gateway", "land", cli_args.pathfinder_url)
+	p = pathfinder.Pathfinder(cli_args.pathfinder_url)
 	hubTransferArgs= p.get_args_for_path(from_, to, value)[:-1]
 
 	print(hubTransferArgs[0])
