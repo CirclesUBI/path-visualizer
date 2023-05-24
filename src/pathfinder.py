@@ -1,6 +1,5 @@
 import json
 import math
-import pprint
 
 import plotly.graph_objects as go
 import requests
@@ -56,8 +55,6 @@ class Pathfinder:
                 safe_list.append(dests[i])
                 j += 1
 
-        # print(address_index_map)
-
         source_ = []
         target_ = []
         value_ = []
@@ -69,7 +66,7 @@ class Pathfinder:
         labels = self.get_names(safe_list)
         flow_labels = self.get_names(tokenOwner)
         flow_labels = [i + " CRC" for i in flow_labels]
-        # self.is_frozen(safe_list)
+
         return source_, target_, value_, flow_labels, labels
 
     def get_balance(self, guy, token_owner):
@@ -83,20 +80,6 @@ class Pathfinder:
             print("Error in getting balance of guy, token, token O.: " + str(guy) + " " + str(token_address) + " " + str(
                 token_owner))
             return 0
-
-    def is_frozen(self, safes):
-        safes = [web3.Web3.to_checksum_address(i) for i in safes]
-        return_list = []
-        for safe in safes:
-            token_address = self.hub.functions.userToToken(safe).call({}, self.block_number)
-            if token_address != "0x0000000000000000000000000000000000000000":
-                token = self.w3.eth.contract(address=token_address, abi=self.abi_token)
-                try:
-                    stopped = token.functions.stopped().call({}, self.block_number)
-                    return_list.append((safe, stopped))
-                except:
-                    print("Error in getting stopped of safe, token: " + str(safe) + " " + str(token_address))
-        pprint.pprint(return_list)
 
     def get_receive_capacity(self, receiver, token, own_tokens_received=0):
         if self.hub.functions.organizations(receiver).call({}, self.block_number) or token == receiver:
@@ -114,29 +97,8 @@ class Pathfinder:
 
         return self.hub.functions.checkSendLimit(token_owner, src, dest).call({}, self.block_number)
 
-    def debug_transfer(self, token_owner, srcs, dests, wads):
-        colors = []
-        for i in range(len(token_owner)):
-            try:
-                self.simulate_path(token_owner[i:i + 1], srcs[i:i + 1], dests[i:i + 1], wads[i:i + 1], srcs[i])
-                # print("debug worked hop:" + str(i))
-                colors.append("rgba(169, 169, 169,0.7)")
-            except:
-                print("an exception occured in debug:")
-                colors.append("rgba(256, 0, 0,0.8)")
-                names = self.get_names([token_owner[i], srcs[i], dests[i]])
-                print("token Owner: " + names[0] + str(token_owner[i:i + 1]))
-                print("src: " + names[1] + str(srcs[i:i + 1]))
-                print("dest: " + names[2] + str(dests[i:i + 1]))
-                print(wads[i:i + 1])
-                print("from: " + str(srcs[i:i + 1]))
-                print("balance: " + str(self.get_balance(srcs[i], token_owner[i]) / 10 ** 18))
-                print("capacity: " + str(self.get_receive_capacity(dests[i], token_owner[i]) / 10 ** 18))
-                print("checkSendLimit: " + str(self.get_send_limits(token_owner[i], srcs[i], dests[i])))
-                print("amount: " + str(wads[i] / 10 ** 18))
-        return colors
-
-    def get_names(self, safes):
+    @staticmethod
+    def get_names(safes):
         safes = [web3.Web3.to_checksum_address(i) for i in safes]
         return_list = safes.copy()
         bulk = 100
@@ -158,7 +120,8 @@ class Pathfinder:
                         return_list[j + k * bulk] = i["username"]
         return return_list
 
-    def sort_args(self, token_owner, srcs, dests, wads):
+    @staticmethod
+    def sort_args(token_owner, srcs, dests, wads):
         tokenOwner_ = []
         srcs_ = []
         dests_ = []
@@ -188,7 +151,8 @@ class Pathfinder:
         return self.hub.functions.transferThrough(token_owner, srcs, dests, wads).call({'from': from_},
                                                                                        self.block_number)
 
-    def draw_shanky(self, source_, target_, value_, flow_labels, labels, colors=0):
+    @staticmethod
+    def draw_shanky(source_, target_, value_, flow_labels, labels, colors=0):
         if colors == 0:
             colors = ["rgba(169, 169, 169,0.7)"] * len(flow_labels)
 
