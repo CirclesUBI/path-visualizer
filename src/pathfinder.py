@@ -1,4 +1,3 @@
-import argparse
 import json
 import math
 import pprint
@@ -11,7 +10,6 @@ from eth_abi import abi
 
 from hubAbi import hub_abi
 from tokenAbi import token_abi
-
 
 class Pathfinder:
 	def __init__(self, provider, pathfinder, blocknumber = "latest"):
@@ -26,8 +24,7 @@ class Pathfinder:
 		address = "0x29b9a7fBb8995b2423a71cC17cf9810798F6C543" #hub
 
 		self.hub = self.w3.eth.contract(address=address, abi=hub_abi)
-		#self.abi_token = [{"constant":True,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":False,"type":"function"},{"constant":False,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"payable":False,"type":"function"},{"constant":True,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":False,"type":"function"},{"constant":False,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"payable":False,"type":"function"},{"constant":True,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"payable":False,"type":"function"},{"constant":True,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"payable":False,"type":"function"},{"constant":True,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":False,"type":"function"},{"constant":False,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"payable":False,"type":"function"},{"constant":True,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"payable":False,"type":"function"},{"inputs":[{"name":"dutchAuction","type":"address"},{"name":"owners","type":"address[]"},{"name":"tokens","type":"uint256[]"}],"payable":False,"type":"constructor"},{"anonymous":False,"inputs":[{"indexed":True,"name":"from","type":"address"},{"indexed":True,"name":"to","type":"address"},{"indexed":False,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"name":"owner","type":"address"},{"indexed":True,"name":"spender","type":"address"},{"indexed":False,"name":"value","type":"uint256"}],"name":"Approval","type":"event"}]
-		self.abi_token = token_abi;
+		self.abi_token = token_abi
 		self.blocknumber = blocknumber
 		self.garden_pathfinder_URL = "http://65.109.109.165:8080/"
 
@@ -275,9 +272,9 @@ class Pathfinder:
 				wads_.insert(0,wads[i])
 		return tokenOwner_, srcs_, dests_, wads_
 			
-	def simulate_path(self, tokenOwner, srcs, dests, wads, from_):
+	def simulate_path(self, token_owner, srcs, dests, wads, from_):
 
-		return self.hub.functions.transferThrough(tokenOwner, srcs, dests, wads).call({'from': from_}, self.blocknumber)
+		return self.hub.functions.transferThrough(token_owner, srcs, dests, wads).call({'from': from_}, self.blocknumber)
 
 	def draw_shanky(self, source_, target_, value_, flow_lables, lables, colors=0):
 
@@ -300,17 +297,12 @@ class Pathfinder:
 			  color = colors
 		  ))]
 
-		
-		# change 'magenta' to its 'rgba' value to add opacity
-		#data[0]['node']['color'] = ['rgba(255,0,255, 0.8)' if color == "magenta" else color for color in data[0]['node']['color']]
-		#data[0]['link']['color'] = [data[0]['link']['color'][src].replace("0.8", str(opacity)) for src in data[0]['link']['source']]
-
 		fig = go.Figure(data)
 
 		fig.update_layout(title_text="Basic Sankey Diagram", font_size=10)
 		fig.show()
 
-	def draw_shanky_from_tx_hash(self, txhash):
-		args = self.get_args_from_tx_hash(txhash)
+	def draw_shanky_from_tx_hash(self, tx_hash):
+		args = self.get_args_from_tx_hash(tx_hash)
 		shanky = self.get_shanky(*args)
 		self.draw_shanky(*shanky)
