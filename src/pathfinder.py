@@ -17,12 +17,6 @@ class Pathfinder:
         self.block_number = blocknumber
         self.garden_pathfinder_URL = pathfinder_url
 
-    def get_args(self, from_, to, value):
-        query = {"method": "compute_transfer",
-                 "params": {"from": from_, "to": to, "value": str(value), "iterative": True, "prune": True}}
-        response = requests.post(self.garden_pathfinder_URL, json=query)
-        return json.loads(response.content)
-
     def get_args_for_path(self, from_, to, value):
         token_owner = []
         srcs = []
@@ -30,7 +24,7 @@ class Pathfinder:
         wads = []
         query = {"method": "compute_transfer", "params": {"from": from_, "to": to, "value": str(value)}}
         response = requests.post(self.garden_pathfinder_URL, json=query)
-        parsed = json.loads(response.content)
+        parsed = response.json()
         capacity = parsed["result"]["maxFlowValue"]
         for step in parsed["result"]["transferSteps"]:
             token_owner.append(web3.Web3.to_checksum_address((step["token_owner"])))
@@ -44,13 +38,13 @@ class Pathfinder:
         safe_list = []
         j = 0
         for i in range(len(srcs)):
-            if (not srcs[i] in address_index_map.keys()):
+            if not srcs[i] in address_index_map.keys():
                 address_index_map[srcs[i]] = j
                 safe_list.append(srcs[i])
                 j += 1
 
         for i in range(len(dests)):
-            if (not dests[i] in address_index_map.keys()):
+            if not dests[i] in address_index_map.keys():
                 address_index_map[dests[i]] = j
                 safe_list.append(dests[i])
                 j += 1
@@ -68,34 +62,6 @@ class Pathfinder:
         flow_labels = [i + " CRC" for i in flow_labels]
 
         return source_, target_, value_, flow_labels, labels
-
-    def get_balance(self, guy, token_owner):
-        guy = web3.Web3.to_checksum_address(guy)
-        token_owner = web3.Web3.to_checksum_address(token_owner)
-        token_address = self.hub.functions.userToToken(token_owner).call({}, self.block_number)
-        token = self.w3.eth.contract(address=token_address, abi=self.abi_token)
-        try:
-            return token.functions.balanceOf(guy).call({}, self.block_number)
-        except:
-            print("Error in getting balance of guy, token, token O.: " + str(guy) + " " + str(token_address) + " " + str(
-                token_owner))
-            return 0
-
-    def get_receive_capacity(self, receiver, token, own_tokens_received=0):
-        if self.hub.functions.organizations(receiver).call({}, self.block_number) or token == receiver:
-            return 100000 * 10 ** 18
-        own_token = self.get_balance(receiver, receiver)
-        receiver_token = self.get_balance(receiver, token)
-        trust_limit = self.hub.functions.limits(receiver, token).call({}, self.block_number)
-
-        return (own_token + own_tokens_received) * (trust_limit / 100) - receiver_token
-
-    def get_send_limits(self, token_owner, src, dest):
-        token_owner = web3.Web3.to_checksum_address(token_owner)
-        src = web3.Web3.to_checksum_address(src)
-        dest = web3.Web3.to_checksum_address(dest)
-
-        return self.hub.functions.checkSendLimit(token_owner, src, dest).call({}, self.block_number)
 
     @staticmethod
     def get_names(safes):
