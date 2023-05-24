@@ -8,8 +8,10 @@ def main():
 						help="The provider to use for the Web3 connection.")
 	parser.add_argument('--sink', type=str,
 						help="The recipient address.")
-	parser.add_argument('--amount', type=str, default="0",
+	parser.add_argument('--amount', type=str,
 						help="The amount in wei.")
+	parser.add_argument('--pathfinder-url', type=str, default="http://65.109.109.165:8080/",
+						help="The url to the pathfinder service.")
 	cli_args = parser.parse_args()
 
 	print(cli_args)
@@ -18,7 +20,7 @@ def main():
 	to = cli_args.sink
 	value = cli_args.amount
 
-	p = pathfinder.Pathfinder("gateway", "land")
+	p = pathfinder.Pathfinder("gateway", "land", cli_args.pathfinder_url)
 	hubTransferArgs= p.get_args_for_path(from_, to, value)[:-1]
 
 	print(hubTransferArgs[0])

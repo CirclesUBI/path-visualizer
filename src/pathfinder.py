@@ -12,7 +12,7 @@ from hubAbi import hub_abi
 from tokenAbi import token_abi
 
 class Pathfinder:
-	def __init__(self, provider, pathfinder, blocknumber = "latest"):
+	def __init__(self, provider, pathfinder, pathfinder_url, blocknumber = "latest"):
 		self.pathfinder = pathfinder
 
 		if provider == "gateway":
@@ -26,7 +26,7 @@ class Pathfinder:
 		self.hub = self.w3.eth.contract(address=address, abi=hub_abi)
 		self.abi_token = token_abi
 		self.blocknumber = blocknumber
-		self.garden_pathfinder_URL = "http://65.109.109.165:8080/"
+		self.garden_pathfinder_URL = pathfinder_url
 
 
 	def get_args(self, from_, to, value):
