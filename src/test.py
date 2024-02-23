@@ -10,7 +10,7 @@ def main():
 						help="The recipient address.")
 	parser.add_argument('--amount', type=str,
 						help="The amount in wei.")
-	parser.add_argument('--pathfinder-url', type=str, default="http://65.109.109.165:8080/",
+	parser.add_argument('--pathfinder-url', type=str, default="https://pathfinder.circlesubi.id",
 						help="The url to the pathfinder service.")
 
 	cli_args = parser.parse_args()

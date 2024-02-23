@@ -1,55 +1,38 @@
 import json
 import math
-import os
+
 import plotly.graph_objects as go
 import requests
 import web3
 
-from dotenv import load_dotenv
 from hubAbi import hub_abi
 from tokenAbi import token_abi
 
-load_dotenv()
+
 class Pathfinder:
-    def __init__(self, pathfinder_url=None, blocknumber="latest"):
-        self.pathfinder_url = pathfinder_url or os.getenv('PATHFINDER_URL')
-        circles_hub_contract = os.getenv('CIRCLES_HUB_CONTRACT')
-        web3_http_provider_url = os.getenv('CIRCLES_RPC_URL')
-        self.w3 = web3.Web3(web3.HTTPProvider(web3_http_provider_url))
-        self.hub = self.w3.eth.contract(address=circles_hub_contract, abi=hub_abi)
+    def __init__(self, pathfinder_url, blocknumber="latest"):
+        self.w3 = web3.Web3(web3.HTTPProvider('https://rpc.circlesubi.id/'))
+        self.hub = self.w3.eth.contract(address="0x29b9a7fBb8995b2423a71cC17cf9810798F6C543", abi=hub_abi)
         self.abi_token = token_abi
         self.block_number = blocknumber
-        self.garden_pathfinder_URL = self.pathfinder_url 
+        self.garden_pathfinder_URL = pathfinder_url
 
     def get_args_for_path(self, from_, to, value):
         token_owner = []
+        print("Original token_owner:", token_owner)
         srcs = []
         dests = []
         wads = []
         query = {"method": "compute_transfer", "params": {"from": from_, "to": to, "value": str(value)}}
         response = requests.post(self.garden_pathfinder_URL, json=query)
-        
-        # Step 1: Inspect the API response
-        if response.status_code == 200:
-            parsed = response.json()
-            print(parsed)  # Add this line to inspect the structure of the response
-        else:
-            print(f"Error calling API: {response.status_code}")
-            return [], [], [], [], 0  # Handle the error by returning empty lists and 0 capacity
-
-        # Step 2 and 3: Check for the 'result' key and handle possible errors or different structures
-        if 'result' in parsed:
-            capacity = parsed["result"]["maxFlowValue"]
-            for step in parsed["result"]["transferSteps"]:
-                token_owner.append(web3.Web3.to_checksum_address((step["token_owner"])))
-                srcs.append(web3.Web3.to_checksum_address((step["from"])))
-                dests.append(web3.Web3.to_checksum_address((step["to"])))
-                wads.append(int(step["value"]))
-            return token_owner, srcs, dests, wads, capacity
-        else:
-            # Handle the case where 'result' is not in the response
-            print("Error or unexpected response structure:", parsed)
-            return [], [], [], [], 0
+        parsed = response.json()
+        capacity = parsed["result"]["maxFlowValue"]
+        for step in parsed["result"]["transferSteps"]:
+            token_owner.append(web3.Web3.to_checksum_address((step["token_owner"])))
+            srcs.append(web3.Web3.to_checksum_address((step["from"])))
+            dests.append(web3.Web3.to_checksum_address((step["to"])))
+            wads.append(int(step["value"]))
+        return token_owner, srcs, dests, wads, capacity
 
     def get_shanky(self, tokenOwner, srcs, dests, wads):
         address_index_map = {}
@@ -135,21 +118,9 @@ class Pathfinder:
         return self.hub.functions.transferThrough(token_owner, srcs, dests, wads).call({'from': from_},
         self.block_number)
 
-    # resolving circles usernames to addresses for form inputs
-    def resolve_username_to_address(self, username):
-        # Construct the query URL
-        query_url = f"https://api.circles.garden/api/users/?username[]={username}"
-        response = requests.get(query_url)
-        if response.status_code == 200:
-            data = response.json()
-            # Assuming the first user returned is the correct one
-            if data["data"]:
-                return data["data"][0]["safeAddress"]
-        return None
-    
-    # Remove @staticmethod
-    def draw_shanky(self, source_, target_, value_, flow_labels, labels, colors=None):
-        if colors is None:
+    @staticmethod
+    def draw_shanky(source_, target_, value_, flow_labels, labels, colors=0):
+        if colors == 0:
             colors = ["rgba(169, 169, 169,0.7)"] * len(flow_labels)
 
         data = [go.Sankey(
@@ -158,7 +129,7 @@ class Pathfinder:
                 thickness=20,
                 line=dict(color="black", width=0.5),
                 label=labels,
-                color=["blue"] * len(labels)  # This should likely be labels, not flow_labels
+                color=["blue"] * len(flow_labels)
             ),
             link=dict(
                 source=source_,
@@ -169,5 +140,6 @@ class Pathfinder:
             ))]
 
         fig = go.Figure(data)
+
         fig.update_layout(title_text="Basic Sankey Diagram", font_size=10)
-        return fig
+        fig.show()
