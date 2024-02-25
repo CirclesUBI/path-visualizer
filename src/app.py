@@ -5,7 +5,7 @@ import subprocess
 import json
 from dotenv import load_dotenv
 from pathfinder import Pathfinder
-from streamlit_d3graph import d3graph
+# from streamlit_d3graph import d3graph
 
 # Load environment variables and initialize Pathfinder
 load_dotenv()
