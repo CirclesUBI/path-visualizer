@@ -4,6 +4,7 @@ import os
 import plotly.graph_objects as go
 import requests
 import web3
+import subprocess
 
 from dotenv import load_dotenv
 from hubAbi import hub_abi
@@ -51,7 +52,7 @@ class Pathfinder:
             print("Error or unexpected response structure:", parsed)
             return [], [], [], [], 0
 
-    def get_shanky(self, tokenOwner, srcs, dests, wads):
+    def get_sankey(self, tokenOwner, srcs, dests, wads):
         address_index_map = {}
         safe_list = []
         j = 0
@@ -131,24 +132,56 @@ class Pathfinder:
                 wads_.insert(0, wads[i])
         return tokenOwner_, srcs_, dests_, wads_
 
-    def simulate_path(self, token_owner, srcs, dests, wads, from_):
-        return self.hub.functions.transferThrough(token_owner, srcs, dests, wads).call({'from': from_},
-        self.block_number)
+    
+    def fetch_trust_connections(self, address):
+        script_path = 'circlesSdk.js'
+        result = subprocess.run(['node', script_path, address], capture_output=True, text=True)
 
-    # resolving circles usernames to addresses for form inputs
+        if result.stderr:
+            print("Error calling Circles SDK script:", result.stderr)
+
+        try:
+            trust_connections = json.loads(result.stdout)
+            if trust_connections:
+                print(trust_connections)
+                return trust_connections
+            else:
+                print("No trust connections found.")
+                return []
+        except json.JSONDecodeError as e:
+            print("Error parsing JSON output:", e)
+            return None
+        except Exception as e:
+            print("An unexpected error occurred:", e)
+            return None 
+
+
+    def process_data_for_visualization(self, trust_connections, avatar_address):
+        nodes = [{'id': avatar_address}]
+        links = []
+
+        for connection in trust_connections:
+            nodes.append({'id': connection['address']})
+            links.append({
+                'source': avatar_address,
+                'target': connection['address'],
+                'value': connection['limit']
+            })
+
+        return nodes, links
+
     def resolve_username_to_address(self, username):
-        # Construct the query URL
         query_url = f"https://api.circles.garden/api/users/?username[]={username}"
         response = requests.get(query_url)
         if response.status_code == 200:
             data = response.json()
-            # Assuming the first user returned is the correct one
             if data["data"]:
-                return data["data"][0]["safeAddress"]
+                for user in data["data"]:
+                    if "safeAddress" in user:
+                        return user["safeAddress"]
         return None
-    
-    # Remove @staticmethod
-    def draw_shanky(self, source_, target_, value_, flow_labels, labels, colors=None):
+
+    def draw_sankey(self, source_, target_, value_, flow_labels, labels, colors=None):
         if colors is None:
             colors = ["rgba(169, 169, 169,0.7)"] * len(flow_labels)
 
@@ -158,7 +191,7 @@ class Pathfinder:
                 thickness=20,
                 line=dict(color="black", width=0.5),
                 label=labels,
-                color=["blue"] * len(labels)  # This should likely be labels, not flow_labels
+                color=["blue"] * len(labels)
             ),
             link=dict(
                 source=source_,
