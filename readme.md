@@ -6,6 +6,8 @@ pip install pipenv
 
 pipenv install
 
+pipenv shell
+
 pipenv run start
 
 python test.py --source "0x6FAe976eb90127B895ceDdf8311864cdA42AC6Ac" \

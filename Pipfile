@@ -10,6 +10,7 @@ streamlit = "*"
 streamlit-option-menu = "*"
 python-dotenv = "*"
 streamlit-d3graph = "*"
+watchdog = "*"
 
 [dev-packages]
 

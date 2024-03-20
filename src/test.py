@@ -36,8 +36,8 @@ def main():
 	except:
 		print("Sim failed")
 
-	shanky = p.get_shanky(*hubTransferArgs)
-	p.draw_shanky(*shanky, colors)
+	sankey = p.get_sankey(*hubTransferArgs)
+	p.draw_sankey(*sankey, colors)
 
 
 if __name__ == "__main__":
