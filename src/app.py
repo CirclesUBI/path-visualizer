@@ -38,6 +38,7 @@ with st.sidebar:
 
     # Network Graph input
     if selected == "Explore Trust Graph":
+        
         st.header("Explore the Trust Graph")
         user_source = st.text_input("From (Username or address)", value="shorn", key="ng_user_source")
         visualize_network_button = st.button('Generate Graph', key='visualize_network')

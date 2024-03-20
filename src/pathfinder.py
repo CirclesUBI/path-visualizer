@@ -32,6 +32,7 @@ class Pathfinder:
         
         # Step 1: Inspect the API response
         if response.status_code == 200:
+
             parsed = response.json()
             print(parsed)  # Add this line to inspect the structure of the response
         else:
